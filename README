@@ -1,28 +1,43 @@
-# Pronóstico de demanda eléctrica
+# Pronóstico de demanda eléctrica de Misiones
 
-Este directorio contiene el codigo y la configuracion para optimizar y evaluar SARIMAX, LightGBM, LSTM y Chronos-2. Los resultados y archivos temporales se generan al ejecutar los comandos.
+Proyecto en Python para optimizar y evaluar modelos de pronóstico de demanda eléctrica con **SARIMAX**, **LightGBM**, **LSTM** y **Chronos-2**. Incluye scripts de análisis y notebooks para explorar los datos y generar figuras.
 
 ## Datos
 
-Los datos no se incluyen en este repositorio. Son de terceros y su uso está sujeto a la autorización correspondiente; obténlos directamente de su fuente autorizada. Coloca los archivos en las rutas indicadas en `config.yaml` (`data/raw` y `data/processed`) antes de ejecutar los modelos o notebooks. Los JSON meteorológicos auxiliares que requieren los scripts de preparación también deben estar disponibles en `src/data`.
+Los datos de demanda son de terceros y **no están incluidos** en este repositorio. Antes de utilizarlos, obténlos de la fuente autorizada y verifica que cuentas con permiso para hacerlo. Coloca los archivos en las rutas indicadas en [`config.yaml`](config.yaml), dentro de `data/raw` y `data/processed`.
+
+Los JSON meteorológicos previos al inicio de la serie también se excluyen. Son necesarios únicamente si se vuelven a ejecutar los scripts de preparación de datos; consulta [`data/README.md`](data/README.md).
 
 ## Requisitos
 
-Windows y Python 3.12. La dependencia de PyTorch esta fijada a CUDA 13.0 en requirements.txt. Chronos-2 descarga el modelo desde Hugging Face en su primera ejecucion.
+- Windows
+- Python 3.12
+- Entorno compatible con la versión de PyTorch indicada en [`requirements.txt`](requirements.txt)
+- Conexión a Internet para instalar dependencias y descargar Chronos-2 la primera vez
 
 ## Instalación
 
-Ejecutar desde la carpeta proyecto_limpio:
+Abre PowerShell en la carpeta del proyecto y ejecuta:
 
+```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+```
 
-## Ejecución
+## Optimización y evaluación
 
-Los CSV de entrada ya estan en data\processed y las rutas se configuran en config.yaml. Para cada modelo, ejecutar primero la optimizacion y luego la evaluacion correspondiente:
+Configura `forecast_horizon`, `stride` y `context_window` en la sección `backtesting` de `config.yaml`. La tesis evalúa dos escenarios:
 
+| Escenario | `forecast_horizon` | `stride` | `context_window` |
+| --- | ---: | ---: | ---: |
+| Pronóstico a 3 horas | `3` | `3` | `168` |
+| Pronóstico a 24 horas (day-ahead) | `24` | `24` | `168` |
+
+Ejecuta la optimización y luego la evaluación para cada modelo y escenario. Cambia la configuración entre escenarios y vuelve a ejecutar los comandos:
+
+```powershell
 python src\optimization\sarimax_optuna.py
 python src\evaluation\sarimax_evaluation.py
 
@@ -34,31 +49,30 @@ python src\evaluation\lstm_evaluation.py
 
 python src\optimization\chronos2_optuna.py
 python src\evaluation\chronos2_evaluation.py
+```
 
-## Horizonte de predicción
+`stride` es el avance entre ventanas de pronóstico. Al igualarlo al horizonte, las ventanas son consecutivas y no se superponen. `context_window` indica cuántas horas previas usa el modelo; `168` corresponde a una semana.
 
-La tesis evalua horizontes de 3 y 24 horas. Para el escenario de 3h, configurar forecast_horizon: 3 y stride: 3. Para el escenario de 24h (day-ahead), configurar forecast_horizon: 24 y stride: 24. Ejecutar la optimizacion y evaluacion de cada modelo por separado con cada configuracion.
+En el flujo actual, conserva `retrain: false` y `last_points_only: false`. Los scripts fijan estos valores en las llamadas de backtesting; cambiarlos en `config.yaml` no altera ese comportamiento. `last_points_only: false` conserva las predicciones de todo el horizonte para su evaluación.
 
-stride indica cuantas horas avanzan los origenes de prediccion. Al igualarlo al horizonte (3 o 24), las ventanas son consecutivas y no se superponen.
+Los resultados se guardan en `output/`. La optimización puede tardar y actualizar los mejores parámetros en `config.yaml`.
 
-context_window es la cantidad de horas de historial que usa el modelo. Mantener context_window: 168 en ambos escenarios para mantener el contexto de 2 semanas.
+## Análisis de residuos
 
-En el flujo actual, conservar retrain: false y last_points_only: false. Los scripts fijan estos dos valores directamente en las llamadas de backtesting; cambiarlos en config.yaml no modifica su comportamiento. last_points_only: false conserva las predicciones de todo el horizonte para evaluarlas.
+Después de completar las evaluaciones, ejecuta:
 
-Al finalizar las evaluaciones, generar el analisis de residuos:
-
+```powershell
 python src\analysis\run_residual_analysis.py
-
-Los resultados se escriben en output. La optimizacion puede tardar y modificar los mejores parametros guardados en config.yaml.
+```
 
 ## Notebooks
 
-Los notebooks son análisis complementarios; no reemplazan la optimización ni la evaluación de los modelos. Abrirlos desde `notebooks` en VS Code o Jupyter. Se copiaron sin salidas guardadas para que los archivos queden livianos.
+Los notebooks son análisis complementarios. Ábrelos desde VS Code o Jupyter con el kernel del entorno del proyecto: **`.venv` (Python 3.12)**. Elige el intérprete `.\.venv\Scripts\python.exe`; `ipykernel` se instala junto con las dependencias.
 
-Usar el kernel Python del entorno virtual de esta carpeta (`proyecto_limpio\.venv`, Python 3.12), no otro entorno. Después de instalar `requirements.txt`, seleccionar en el notebook el intérprete `proyecto_limpio\.venv\Scripts\python.exe`; ese entorno está incluido en `ipykernel`.
+| Notebook | Contenido |
+| --- | --- |
+| [Análisis del dataset](notebooks/%5Bstage-1%5Danalisis-dataset.ipynb) | Exploración del dataset, patrones temporales y diagnósticos de estacionariedad. |
+| [Análisis de trials](notebooks/%5Bstage-2%5Danalisis-trials.ipynb) | Análisis y comparación de los resultados de optimización. |
+| [Figuras del informe](notebooks/%5Bstage-fina%5Dfiguras-informe.ipynb) | Generación de figuras del informe a partir de datos y resultados. |
 
-- `[stage-1]analisis-dataset.ipynb`: explora y describe el dataset, sus patrones temporales y diagnósticos de estacionariedad.
-- `[stage-2]analisis-trials.ipynb`: analiza y compara los resultados de los trials de optimización de los cuatro modelos.
-- `[stage-fina]figuras-informe.ipynb`: genera las figuras del informe a partir de los datos, trials y resultados de evaluación.
-
-El notebook de etapa 1 usa los datos de `data/raw`. Los notebooks de etapas 2 y final utilizan resultados producidos por las ejecuciones de optimización y evaluación.
+El notebook de etapa 1 requiere el archivo de `data/raw`. Los de etapas 2 y final requieren los resultados correspondientes de `output/optimization` y `output/evaluation`.
