@@ -32,7 +32,7 @@ Configura `forecast_horizon`, `stride` y `context_window` en la sección `backte
 | Escenario | `forecast_horizon` | `stride` | `context_window` |
 | --- | ---: | ---: | ---: |
 | Pronóstico a 3 horas | `3` | `3` | `168` |
-| Pronóstico a 24 horas (day-ahead) | `24` | `24` | `168` |
+| Pronóstico a 24 horas | `24` | `24` | `168` |
 
 Ejecuta la optimización y luego la evaluación para cada modelo y escenario. Cambia la configuración entre escenarios y vuelve a ejecutar los comandos:
 
