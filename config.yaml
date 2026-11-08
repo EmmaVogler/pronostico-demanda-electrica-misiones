@@ -1,0 +1,843 @@
+project:
+  name: Pronóstico de demanda eléctrica del SIP de Misiones
+  random_seed: 42
+dataset:
+  input_file_sarimax: data/processed/demandas_horarias_2023_2026[sarimax].csv
+  input_file_lstm: data/processed/demandas_horarias_2023_2026[lstm].csv
+  input_file_lightgbm: data/processed/demandas_horarias_2023_2026[lightgbm].csv
+  input_file_chronos2: data/processed/demandas_horarias_2023_2026[chronos2].csv
+  datetime:
+    date_column: FECHA
+    hour_column: Horario
+    frequency: 1h
+  target: TOTAL_SIP
+  period:
+    start: '2023-01-01 00:00:00'
+    end: '2026-01-01 23:00:00'
+  exogenous_candidates:
+    - TEMP
+    - HUM
+    - es_laboral
+    - dia_semana
+split:
+  train_ratio: 0.7
+  validation_ratio: 0.15
+  test_ratio: 0.15
+backtesting:
+  forecast_horizon: 3
+  stride: 3
+  context_window: 168
+  retrain: false
+  last_points_only: false
+horizons:
+  - 24
+  - 3
+  - 6
+  - 12
+optimization:
+  study_name: forecasting
+  direction: minimize
+  metric: rmse
+  trials_sarimax: 120
+  trials_lstm: 100
+  trials_lightgbm: 150
+  trials_chronos2: 50
+  timeout_seconds:
+  n_startup_trials: 30
+  sampler: TPESampler
+  pruner: MedianPruner
+metrics:
+  primary: rmse
+  report:
+    - mae
+    - rmse
+    - mape
+    - smape
+    - r2
+sarimax:
+  seasonal_period: 24
+  method: CSS
+  maxiter: 125
+  initialization: diffuse
+  enforce_stationarity: false
+  enforce_invertibility: false
+  features:
+    fixed:
+      horario:
+        flag: use_hora_ciclica
+        features:
+          - hora_sin
+          - hora_cos
+    candidates_group:
+      dia_semana:
+        flag: use_dia_semana
+        features:
+          - dia_semana_sin
+          - dia_semana_cos
+      dia_anio:
+        flag: use_dia_anio
+        features:
+          - dia_anio_sin
+          - dia_anio_cos
+      mes:
+        flag: use_mes
+        features:
+          - mes_sin
+          - mes_cos
+      es_laboral:
+        flag: use_es_laboral
+        features:
+          - es_laboral
+      meteorologia_TEMP:
+        flag: use_TEMP
+        features:
+          - TEMP_F_24
+      meteorologia_HUM:
+        flag: use_HUM
+        features:
+          - HUM_F_24
+      target_lags:
+        flag: use_target_lags
+        features:
+          - target_lag_24
+  search:
+    p:
+      - 0
+      - 5
+    d:
+      - 0
+    q:
+      - 0
+      - 5
+    P:
+      - 0
+      - 3
+    D:
+      - 0
+      - 2
+    Q:
+      - 0
+      - 3
+  fourier:
+    periods:
+      daily: 24.0
+      weekly: 168.0
+      yearly: 8765.82
+    k_daily:
+      - 1
+      - 6
+    k_weekly:
+      - 1
+      - 4
+    k_yearly:
+      - 1
+      - 3
+  best:
+    p: 3
+    d: 0
+    q: 3
+    P: 3
+    D: 0
+    Q: 0
+    seasonal_period: 24
+    k_daily: 3
+    k_weekly: 4
+    k_yearly: 3
+    features:
+      fixed:
+        - hora_sin
+        - hora_cos
+      selected:
+        - dia_semana_sin
+        - dia_semana_cos
+        - dia_anio_sin
+        - dia_anio_cos
+        - mes_sin
+        - mes_cos
+        - TEMP_F_24
+        - target_lag_24
+        - fourier_daily_sin_1
+        - fourier_daily_cos_1
+        - fourier_daily_sin_2
+        - fourier_daily_cos_2
+        - fourier_daily_sin_3
+        - fourier_daily_cos_3
+        - fourier_weekly_sin_1
+        - fourier_weekly_cos_1
+        - fourier_weekly_sin_2
+        - fourier_weekly_cos_2
+        - fourier_weekly_sin_3
+        - fourier_weekly_cos_3
+        - fourier_weekly_sin_4
+        - fourier_weekly_cos_4
+        - fourier_yearly_sin_1
+        - fourier_yearly_cos_1
+        - fourier_yearly_sin_2
+        - fourier_yearly_cos_2
+        - fourier_yearly_sin_3
+        - fourier_yearly_cos_3
+    rmse: 34.0025
+    mae: 28.1485
+    mape: 8.026
+    smape: 7.9995
+    r2: 0.8061
+    rmse_test: 43.0775
+    mae_test: 29.2808
+    mape_test: 9.2567
+    smape_test: 8.9123
+    r2_test: 0.6265
+    acf_24: 0.005900217577239694
+    acf_168: 0.1136831902703593
+    aic: 162296.0698295607
+    bic: 162616.70308532298
+    trial_number: 70
+    datetime: '2026-10-18 12:13:32'
+  best_3h:
+    p: 3
+    d: 0
+    q: 1
+    P: 2
+    D: 0
+    Q: 0
+    seasonal_period: 24
+    k_daily: 2
+    k_weekly: 4
+    k_yearly: 3
+    features:
+      fixed:
+        - hora_sin
+        - hora_cos
+      selected:
+        - dia_anio_sin
+        - dia_anio_cos
+        - mes_sin
+        - mes_cos
+        - TEMP_F_24
+        - target_lag_24
+        - fourier_daily_sin_1
+        - fourier_daily_cos_1
+        - fourier_daily_sin_2
+        - fourier_daily_cos_2
+        - fourier_weekly_sin_1
+        - fourier_weekly_cos_1
+        - fourier_weekly_sin_2
+        - fourier_weekly_cos_2
+        - fourier_weekly_sin_3
+        - fourier_weekly_cos_3
+        - fourier_weekly_sin_4
+        - fourier_weekly_cos_4
+        - fourier_yearly_sin_1
+        - fourier_yearly_cos_1
+        - fourier_yearly_sin_2
+        - fourier_yearly_cos_2
+        - fourier_yearly_sin_3
+        - fourier_yearly_cos_3
+    rmse: 39.6164
+    cv_rmse: 32.0053
+    cv_rmse_pooled: 42.1616
+    cv_mae: 30.3369
+    cv_mape: 9.1592
+    cv_smape: 8.9631
+    cv_r2: 0.7741
+    rmse_test: 42.99
+    mae_test: 29.7881
+    mape_test: 9.3412
+    smape_test: 9.0716
+    r2_test: 0.6274
+    acf_24: 0.0182657058441421
+    acf_168: 0.1171263710329799
+    aic: 163030.25962075047
+    bic: 163296.15061333383
+    trial_number: 72
+    datetime: '2026-10-19 05:06:23'
+  best_24h:
+    p: 3
+    d: 0
+    q: 1
+    P: 2
+    D: 0
+    Q: 0
+    seasonal_period: 24
+    k_daily: 2
+    k_weekly: 4
+    k_yearly: 3
+    features:
+      fixed:
+        - hora_sin
+        - hora_cos
+      selected:
+        - dia_anio_sin
+        - dia_anio_cos
+        - mes_sin
+        - mes_cos
+        - TEMP_F_24
+        - target_lag_24
+        - fourier_daily_sin_1
+        - fourier_daily_cos_1
+        - fourier_daily_sin_2
+        - fourier_daily_cos_2
+        - fourier_weekly_sin_1
+        - fourier_weekly_cos_1
+        - fourier_weekly_sin_2
+        - fourier_weekly_cos_2
+        - fourier_weekly_sin_3
+        - fourier_weekly_cos_3
+        - fourier_weekly_sin_4
+        - fourier_weekly_cos_4
+        - fourier_yearly_sin_1
+        - fourier_yearly_cos_1
+        - fourier_yearly_sin_2
+        - fourier_yearly_cos_2
+        - fourier_yearly_sin_3
+        - fourier_yearly_cos_3
+    rmse: 39.6164
+    cv_rmse: 36.4646
+    cv_rmse_pooled: 42.2001
+    cv_mae: 30.3636
+    cv_mape: 9.1627
+    cv_smape: 8.9667
+    cv_r2: 0.7734
+    rmse_test: 42.7579
+    mae_test: 29.6015
+    mape_test: 9.2896
+    smape_test: 9.0293
+    r2_test: 0.632
+    acf_24: 0.0182657058441421
+    acf_168: 0.1171263710329799
+    aic: 163030.25962075047
+    bic: 163296.15061333383
+    trial_number: 72
+    datetime: '2026-10-19 05:13:36'
+lightgbm:
+  features:
+    lags_target: &id001
+      - -24
+    lags_past_covs: &id002
+      - -1
+    lags_future_covs: &id003
+      - 0
+    past_covariates:
+      - rolling_mean_temp_24h
+      - rolling_mean_24h
+      - rolling_std_24h
+    future_covariates:
+      - hora_sin
+      - hora_cos
+      - dia_sem_sin
+      - dia_sem_cos
+      - es_feriado
+      - indice_temporal
+      - temperatura
+      - humedad
+      - temp_lag_1h
+      - temp_lag_24h
+      - hum_lag_1h
+      - hum_lag_24h
+      - fourier_daily_sin_1
+      - fourier_daily_cos_1
+      - fourier_daily_sin_2
+      - fourier_daily_cos_2
+      - fourier_daily_sin_3
+      - fourier_daily_cos_3
+      - fourier_daily_sin_4
+      - fourier_daily_cos_4
+      - fourier_daily_sin_5
+      - fourier_daily_cos_5
+      - fourier_daily_sin_6
+      - fourier_daily_cos_6
+      - fourier_weekly_sin_1
+      - fourier_weekly_cos_1
+      - fourier_weekly_sin_2
+      - fourier_weekly_cos_2
+      - fourier_weekly_sin_3
+      - fourier_weekly_cos_3
+      - fourier_weekly_sin_4
+      - fourier_weekly_cos_4
+      - fourier_yearly_sin_1
+      - fourier_yearly_cos_1
+      - fourier_yearly_sin_2
+      - fourier_yearly_cos_2
+    past_groups:
+      use_rolling_temp:
+        - rolling_mean_temp_24h
+      use_rolling_target:
+        - rolling_mean_24h
+        - rolling_std_24h
+    future_groups:
+      use_hora_ciclica:
+        - hora_sin
+        - hora_cos
+      use_dia_semana:
+        - dia_sem_sin
+        - dia_sem_cos
+      use_feriado:
+        - es_feriado
+      use_indice_temporal:
+        - indice_temporal
+      use_temp_future:
+        - temperatura
+      use_hum_future:
+        - humedad
+      use_temp_lags:
+        - temp_lag_24h
+      use_hum_lags:
+        - hum_lag_24h
+      use_fourier_daily:
+        - fourier_daily_sin_1
+        - fourier_daily_cos_1
+        - fourier_daily_sin_2
+        - fourier_daily_cos_2
+        - fourier_daily_sin_3
+        - fourier_daily_cos_3
+        - fourier_daily_sin_4
+        - fourier_daily_cos_4
+        - fourier_daily_sin_5
+        - fourier_daily_cos_5
+        - fourier_daily_sin_6
+        - fourier_daily_cos_6
+      use_fourier_weekly:
+        - fourier_weekly_sin_1
+        - fourier_weekly_cos_1
+        - fourier_weekly_sin_2
+        - fourier_weekly_cos_2
+        - fourier_weekly_sin_3
+        - fourier_weekly_cos_3
+        - fourier_weekly_sin_4
+        - fourier_weekly_cos_4
+      use_fourier_yearly:
+        - fourier_yearly_sin_1
+        - fourier_yearly_cos_1
+        - fourier_yearly_sin_2
+        - fourier_yearly_cos_2
+  search:
+    learning_rate:
+      - 0.01
+      - 0.2
+    num_leaves:
+      - 15
+      - 256
+    max_depth:
+      - -1
+      - 12
+    min_child_samples:
+      - 10
+      - 250
+    feature_fraction:
+      - 0.4
+      - 1.0
+    bagging_fraction:
+      - 0.6
+      - 1.0
+    lambda_l1:
+      - 1e-8
+      - 10.0
+    lambda_l2:
+      - 1e-8
+      - 10.0
+    n_estimators:
+      - 200
+      - 1500
+  best:
+    learning_rate: 0.013892370539811918
+    num_leaves: 256
+    max_depth: 10
+    min_child_samples: 170
+    feature_fraction: 0.5218
+    bagging_fraction: 0.7728
+    lambda_l1: 6.7831
+    lambda_l2: 7.804
+    lags: *id001
+    output_chunk_length: 1
+    trial_number: 142
+    datetime: '2026-10-05 15:11:18'
+    lags_past_covariates: *id002
+    lags_future_covariates: *id003
+    past_covariates:
+      - rolling_mean_temp_24h
+      - rolling_mean_24h
+      - rolling_std_24h
+    future_covariates:
+      - hora_sin
+      - hora_cos
+      - dia_sem_sin
+      - dia_sem_cos
+      - indice_temporal
+      - temperatura
+      - humedad
+      - temp_lag_24h
+      - hum_lag_24h
+      - fourier_weekly_sin_1
+      - fourier_weekly_cos_1
+      - fourier_weekly_sin_2
+      - fourier_weekly_cos_2
+      - fourier_weekly_sin_3
+      - fourier_weekly_cos_3
+      - fourier_weekly_sin_4
+      - fourier_weekly_cos_4
+      - fourier_yearly_sin_1
+      - fourier_yearly_cos_1
+      - fourier_yearly_sin_2
+      - fourier_yearly_cos_2
+    past_groups:
+      - use_rolling_temp
+      - use_rolling_target
+    future_groups:
+      - use_hora_ciclica
+      - use_dia_semana
+      - use_indice_temporal
+      - use_temp_future
+      - use_hum_future
+      - use_temp_lags
+      - use_hum_lags
+      - use_fourier_weekly
+      - use_fourier_yearly
+    mae_test: 16.7747
+    mape_test: 5.3778
+    smape_test: 5.191
+    r2_test: 0.8686
+    n_estimators: 933
+    cv_rmse: 33.0695
+    cv_rmse_pooled: 35.7596
+    cv_mae: 26.8049
+    cv_mape: 7.3516
+    cv_smape: 7.3243
+    cv_r2: 0.8263
+    rmse_test: 25.5474
+    rmse: 23.311
+    mae: 18.3333
+    mape: 5.3695
+    smape: 5.243
+    r2: 0.9159
+    fourier_k_daily: 0
+    fourier_k_weekly: 4
+    fourier_k_yearly: 2
+  best_24h:
+    learning_rate: 0.0167972810874136
+    num_leaves: 25
+    max_depth: 11
+    min_child_samples: 184
+    feature_fraction: 0.5484
+    bagging_fraction: 0.7902
+    lambda_l1: 5.1818
+    lambda_l2: 8.7617
+    n_estimators: 761
+    lags: *id001
+    lags_past_covariates: *id002
+    lags_future_covariates: *id003
+    past_covariates:
+      - rolling_mean_temp_24h
+      - rolling_mean_24h
+      - rolling_std_24h
+    future_covariates:
+      - hora_sin
+      - hora_cos
+      - indice_temporal
+      - temperatura
+      - humedad
+      - temp_lag_24h
+      - hum_lag_24h
+      - fourier_weekly_sin_1
+      - fourier_weekly_cos_1
+      - fourier_weekly_sin_2
+      - fourier_weekly_cos_2
+      - fourier_weekly_sin_3
+      - fourier_weekly_cos_3
+      - fourier_weekly_sin_4
+      - fourier_weekly_cos_4
+      - fourier_yearly_sin_1
+      - fourier_yearly_cos_1
+      - fourier_yearly_sin_2
+      - fourier_yearly_cos_2
+    past_groups:
+      - use_rolling_temp
+      - use_rolling_target
+    future_groups:
+      - use_hora_ciclica
+      - use_indice_temporal
+      - use_temp_future
+      - use_hum_future
+      - use_temp_lags
+      - use_hum_lags
+      - use_fourier_weekly
+      - use_fourier_yearly
+    fourier_k_daily: 0
+    fourier_k_weekly: 4
+    fourier_k_yearly: 2
+    output_chunk_length: 1
+    cv_rmse: 26.6474
+    cv_rmse_pooled: 29.9719
+    cv_mae: 21.6501
+    cv_mape: 6.5332
+    cv_smape: 6.4015
+    cv_r2: 0.8858
+    rmse_test: 25.8143
+    mae_test: 17.0503
+    mape_test: 5.4653
+    smape_test: 5.2832
+    r2_test: 0.8659
+    trial_number: 112
+    datetime: '2026-10-19 16:16:17'
+  best_3h:
+    learning_rate: 0.0167972810874136
+    num_leaves: 25
+    max_depth: 11
+    min_child_samples: 184
+    feature_fraction: 0.5484
+    bagging_fraction: 0.7902
+    lambda_l1: 5.1818
+    lambda_l2: 8.7617
+    n_estimators: 761
+    lags: *id001
+    lags_past_covariates: *id002
+    lags_future_covariates: *id003
+    past_covariates:
+      - rolling_mean_temp_24h
+      - rolling_mean_24h
+      - rolling_std_24h
+    future_covariates:
+      - hora_sin
+      - hora_cos
+      - indice_temporal
+      - temperatura
+      - humedad
+      - temp_lag_24h
+      - hum_lag_24h
+      - fourier_weekly_sin_1
+      - fourier_weekly_cos_1
+      - fourier_weekly_sin_2
+      - fourier_weekly_cos_2
+      - fourier_weekly_sin_3
+      - fourier_weekly_cos_3
+      - fourier_weekly_sin_4
+      - fourier_weekly_cos_4
+      - fourier_yearly_sin_1
+      - fourier_yearly_cos_1
+      - fourier_yearly_sin_2
+      - fourier_yearly_cos_2
+    past_groups:
+      - use_rolling_temp
+      - use_rolling_target
+    future_groups:
+      - use_hora_ciclica
+      - use_indice_temporal
+      - use_temp_future
+      - use_hum_future
+      - use_temp_lags
+      - use_hum_lags
+      - use_fourier_weekly
+      - use_fourier_yearly
+    fourier_k_daily: 0
+    fourier_k_weekly: 4
+    fourier_k_yearly: 2
+    output_chunk_length: 1
+    cv_rmse: 23.3642
+    cv_rmse_pooled: 29.9636
+    cv_mae: 21.6426
+    cv_mape: 6.5318
+    cv_smape: 6.4001
+    cv_r2: 0.8859
+    rmse_test: 26.169
+    mae_test: 17.2302
+    mape_test: 5.5263
+    smape_test: 5.3337
+    r2_test: 0.8619
+    trial_number: 112
+    datetime: '2026-10-19 16:14:58'
+lstm:
+  search:
+    hidden_size:
+      - 32
+      - 128
+    num_layers:
+      - 1
+      - 2
+    dropout:
+      - 0.0
+      - 0.3
+    batch_size:
+      - 32
+      - 128
+    learning_rate:
+      - 0.0001
+      - 0.01
+    epochs:
+      - 20
+      - 100
+  best:
+    hidden_size: 32
+    num_layers: 1
+    dropout: 0.1439
+    batch_size: 96
+    learning_rate: 0.002231403036962395
+    epochs: 45
+    input_chunk_length: 168
+    output_chunk_length: 24
+    fixed_features:
+      - hora_sin
+      - hora_cos
+    selected_features:
+      - temp_lag_24h
+      - es_feriado
+      - dia_anio_sin
+      - dia_anio_cos
+      - target_lag_24
+    trial_number: 91
+    datetime: '2026-10-18 08:46:31'
+    rmse: 24.9762
+    mae: 19.7282
+    mape: 5.6139
+    smape: 5.5278
+    r2: 0.8898
+    rmse_test: 42.3083
+    mae_test: 32.5915
+    mape_test: 9.8821
+    smape_test: 10.3137
+    r2_test: 0.6397
+    cv_rmse: 28.2946
+    cv_rmse_pooled: 31.1039
+    cv_mae: 22.885
+    cv_mape: 6.5405
+    cv_smape: 6.4854
+    cv_r2: 0.8686
+  best_3h:
+    hidden_size: 32
+    num_layers: 1
+    dropout: 0.1437
+    batch_size: 96
+    learning_rate: 0.0017130952707932
+    epochs: 52
+    input_chunk_length: 168
+    output_chunk_length: 1
+    forecast_horizon: 3
+    forecast_strategy: autoregressive
+    fixed_features:
+      - hora_sin
+      - hora_cos
+    selected_features:
+      - es_feriado
+      - dia_anio_sin
+      - dia_anio_cos
+    rmse: 29.7933
+    cv_rmse: 14.9862
+    cv_rmse_pooled: 21.3192
+    cv_mae: 13.2145
+    cv_mape: 4.0563
+    cv_smape: 3.9701
+    cv_r2: 0.9423
+    rmse_test: 23.3084
+    mae_test: 15.1939
+    mape_test: 4.851
+    smape_test: 4.6925
+    r2_test: 0.8905
+    trial_number: 92
+    datetime: '2026-10-18 21:55:07'
+  best_24h:
+    hidden_size: 32
+    num_layers: 1
+    dropout: 0.1128
+    batch_size: 96
+    learning_rate: 0.001257190244303
+    epochs: 52
+    input_chunk_length: 168
+    output_chunk_length: 1
+    forecast_horizon: 24
+    forecast_strategy: autoregressive
+    fixed_features:
+      - hora_sin
+      - hora_cos
+    selected_features:
+      - es_feriado
+      - dia_anio_sin
+      - dia_anio_cos
+    rmse: 29.5812
+    cv_rmse: 32.6346
+    cv_rmse_pooled: 38.6235
+    cv_mae: 26.8145
+    cv_mape: 7.9654
+    cv_smape: 7.7622
+    cv_r2: 0.8105
+    rmse_test: 35.4444
+    mae_test: 25.8421
+    mape_test: 7.8719
+    smape_test: 7.933
+    r2_test: 0.7471
+    trial_number: 96
+    datetime: '2026-10-18 20:25:46'
+chronos2:
+  model_name: amazon/chronos-2
+  search:
+    context_length:
+      - 168
+      - 336
+      - 720
+  best:
+    hub_model_name: amazon/chronos-2
+    past_covariates: []
+    future_covariates:
+      - es_laboral
+      - TEMP_F_24
+    input_chunk_length: 168
+    output_chunk_length: 24
+    rmse: 28.429778514072854
+    mae: 22.781856756287862
+    mape: 6.735216034216485
+    smape: 6.570519291633575
+    r2: 0.8616596384535506
+    rmse_test: 30.4276
+    mae_test: 20.5534
+    mape_test: 6.5856
+    smape_test: 6.4443
+    r2_test: 0.8137
+    trial_number: 14
+    datetime: '2026-10-18 14:58:48'
+  best_24h:
+    hub_model_name: amazon/chronos-2
+    past_covariates: []
+    future_covariates:
+      - es_laboral
+      - TEMP_F_24
+    input_chunk_length: 168
+    output_chunk_length: 24
+    rmse: 28.4298
+    cv_rmse: 30.9162
+    cv_rmse_pooled: 36.9238
+    cv_mae: 25.1359
+    cv_mape: 7.5482
+    cv_smape: 7.4543
+    cv_r2: 0.8267
+    rmse_test: 30.4276
+    mae_test: 20.5534
+    mape_test: 6.5856
+    smape_test: 6.4443
+    r2_test: 0.8137
+    trial_number: 14
+    datetime: '2026-10-19 21:29:27'
+  best_3h:
+    hub_model_name: amazon/chronos-2
+    past_covariates: []
+    future_covariates:
+      - es_laboral
+      - TEMP_F_24
+    input_chunk_length: 168
+    output_chunk_length: 3
+    rmse: 28.4298
+    cv_rmse: 16.1982
+    cv_rmse_pooled: 23.3413
+    cv_mae: 14.3739
+    cv_mape: 4.4297
+    cv_smape: 4.3639
+    cv_r2: 0.9307
+    rmse_test: 23.7826
+    mae_test: 14.6232
+    mape_test: 4.7568
+    smape_test: 4.6325
+    r2_test: 0.886
+    trial_number: 14
+    datetime: '2026-10-19 23:20:37'
+output:
+  directory: output
+  logs: output/logs
+  models: output/models
+  metrics: output/metrics
+  evaluation: output/evaluation
+  optimization: output/optimization
