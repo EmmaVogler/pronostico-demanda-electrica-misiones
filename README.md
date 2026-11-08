@@ -13,7 +13,6 @@ Los JSON meteorológicos previos al inicio de la serie también se excluyen. Son
 - Windows
 - Python 3.12
 - Entorno compatible con la versión de PyTorch indicada en [`requirements.txt`](requirements.txt)
-- Conexión a Internet para instalar dependencias y descargar Chronos-2 la primera vez
 
 ## Instalación
 
