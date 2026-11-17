@@ -349,7 +349,8 @@ def main():
     past_covs_ts   = TimeSeries.from_dataframe(df[ALL_PAST_COLS], freq="h") if ALL_PAST_COLS else None
     future_covs_ts = TimeSeries.from_dataframe(df[ALL_FUTURE_COLS], freq="h") if ALL_FUTURE_COLS else None
 
-    cuts = build_cv_cuts(period_start, TEST_START, N_FOLDS, MIN_TRAIN_HOURS)
+    period_start_cv = df.loc["2023-01-02":].index[0]
+    cuts = build_cv_cuts(period_start_cv, TEST_START, N_FOLDS, MIN_TRAIN_HOURS)
     print(f"\nCV temporal ({N_FOLDS} folds, expanding window, dentro de train+val):")
     for k in range(len(cuts) - 1):
         print(f"  fold {k + 1}: fit < {cuts[k]}  |  eval [{cuts[k]}, {cuts[k + 1]})")

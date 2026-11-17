@@ -142,19 +142,6 @@ def _fixed_window_forecast(
     fc = _sf_arima.forecast_arima(m.model_, h=forecast_horizon, xreg=fc_X)
     return fc["mean"]
 
-def build_cv_cuts_idx(test_start_idx: int, n_folds: int, min_train_hours: int) -> list:
-    """Cortes de la CV temporal (expanding window) en índices enteros.
-
-    Frecuencia horaria -> índice == horas. El primer corte deja al menos
-    `min_train_hours` de entrenamiento.
-    """
-    min_train_idx = min_train_hours
-    span = max(test_start_idx - min_train_idx, n_folds)
-    step = span // n_folds
-    cuts = [min_train_idx + step * i for i in range(n_folds)]
-    cuts.append(test_start_idx)
-    return cuts
-
 def _param_default(search_cfg: dict, name: str, fallback: int) -> int:
     """Valor fijo de un parámetro si su cota de búsqueda tiene un solo elemento.
 
@@ -412,10 +399,16 @@ def main():
     print(f"Test:  {n_test} obs (desde {TEST_START}, reservado)")
     print(f"Walk-forward: horizon={FORECAST_HORIZON}h, stride={STRIDE}h, context_window={CONTEXT_WINDOW}h")
 
-    cuts = build_cv_cuts_idx(test_start_idx, N_FOLDS, MIN_TRAIN_HOURS)
+    period_start_cv = target.loc["2023-01-02":].index[0]
+    test_start_ts = target.index[test_start_idx]
+    _min_train = period_start_cv + pd.Timedelta(hours=MIN_TRAIN_HOURS)
+    _span_days = max((test_start_ts - _min_train).days, N_FOLDS)
+    _step_days = _span_days // N_FOLDS
+    _cuts_ts = [_min_train + pd.Timedelta(days=_step_days * i) for i in range(N_FOLDS)] + [test_start_ts]
+    cuts = [int(target.index.searchsorted(t)) for t in _cuts_ts]
     print(f"\nCV temporal ({N_FOLDS} folds, expanding window, dentro de train+val):")
     for k in range(len(cuts) - 1):
-        print(f"  fold {k + 1}: fit < {target.index[cuts[k]]}  |  eval [{target.index[cuts[k]]}, {target.index[cuts[k + 1] - 1]})")
+        print(f"  fold {k + 1}: fit < {target.index[cuts[k]]}  |  eval [{target.index[cuts[k]]}, {target.index[cuts[k + 1]]})")
 
     if not TRIALS_CSV.exists():
         print(f"\nError: no se encontró {TRIALS_CSV}. Corré primero src/optimization/sarimax_optuna.py")
